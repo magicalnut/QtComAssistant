@@ -13,6 +13,8 @@ qt_add_executable(
     mainwindow.h
     utils.h
     utils.cpp
+    serialservice.h
+    serialservice.cpp
 )
 
 qt_add_translations(

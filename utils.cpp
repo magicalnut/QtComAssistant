@@ -40,8 +40,7 @@ QString bytesToHex(const QByteArray &bytes, char separator){
     return result;
 }
 
-QByteArray parseEscapes(const QString &text, bool *ok)
-{
+QByteArray parseEscapes(const QString &text, bool *ok){
     QByteArray result;
     result.reserve(text.size()/4);
     bool inEscape = false;
@@ -87,16 +86,14 @@ QByteArray parseEscapes(const QString &text, bool *ok)
     return result;
 }
 
-quint8 xorChecksum(const QByteArray &data)
-{
+quint8 xorChecksum(const QByteArray &data){
     quint8 result = 0;
     for (int i = 0; i < data.size(); ++i)
         result ^= static_cast<quint8>(data.at(i));
     return result;
 }
 
-quint8 sumChecksum(const QByteArray &data)
-{
+quint8 sumChecksum(const QByteArray &data){
     quint8 sum = 0;
     for (int i = 0; i < data.size(); ++i){
         sum += static_cast<quint8>(data.at(i));
@@ -140,8 +137,7 @@ static const quint16 crc16ccittTable[256] = {
     0x6E17,0x7E36,0x4E55,0x5E74,0x2E93,0x3EB2,0x0ED1,0x1EF0
 };
 
-quint16 crc16CCITT(const QByteArray &data)
-{
+quint16 crc16CCITT(const QByteArray &data){
     quint16 crc = 0x0000;
     for (int i = 0; i < data.size(); ++i) {
         quint8 index = static_cast<quint8>((crc >> 8) ^ static_cast<quint8>(data.at(i))) ;
@@ -186,8 +182,7 @@ static const quint16 crc16ModbusTable[256] = {
     0x8201,0x42C0,0x4380,0x8341,0x4100,0x81C1,0x8081,0x4040
 };
 
-quint16 crc16Modbus(const QByteArray &data)
-{
+quint16 crc16Modbus(const QByteArray &data){
     quint16 crc = 0xFFFF;
     for (int i = 0; i < data.size(); ++i) {
         quint8 index = static_cast<quint8>(crc ^ static_cast<quint8>(data.at(i)));
@@ -196,8 +191,7 @@ quint16 crc16Modbus(const QByteArray &data)
     return crc;
 }
 
-QString checksumString(const QByteArray &data, ChecksumType type)
-{
+QString checksumString(const QByteArray &data, ChecksumType type){
     switch (type) {
     case ChecksumType::XOR:
         return QString::asprintf("%02X", xorChecksum(data));
@@ -213,8 +207,7 @@ QString checksumString(const QByteArray &data, ChecksumType type)
 }
 
 // ---- 编码 ----
-QByteArray encode(const QString &text, const QString &encoding)
-{
+QByteArray encode(const QString &text, const QString &encoding){
     if (encoding == "UTF-8") {
         return text.toUtf8();
     } else if (encoding == "GBK") {
@@ -229,8 +222,7 @@ QByteArray encode(const QString &text, const QString &encoding)
 }
 
 // ---- 解码 ----
-QString decode(const QByteArray &data, const QString &encoding)
-{
+QString decode(const QByteArray &data, const QString &encoding){
     if (encoding == "UTF-8") {
         return QString::fromUtf8(data);
     } else if (encoding == "GBK") {
@@ -245,8 +237,7 @@ QString decode(const QByteArray &data, const QString &encoding)
 }
 
 // ---- 时间戳 ----
-QString timestampNow()
-{
+QString timestampNow(){
     return QDateTime::currentDateTime().toString("[yyyy-MM-dd hh:mm:ss.zzz] ");
 }
 
