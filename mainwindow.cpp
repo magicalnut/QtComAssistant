@@ -445,6 +445,7 @@ QByteArray MainWindow::makeSendContent() const
         }
     }
 
+    // data.append(QByteArray::fromHex(m_checksumResultLabel->text().toUtf8()));
     // 追加换行符
     int nlIndex = m_newlineCombo->currentIndex();
     // 0: CRLF, 1: LF, 2: CR, 3: none
@@ -455,7 +456,6 @@ QByteArray MainWindow::makeSendContent() const
     else if (nlIndex == 2)
         data.append('\r');
     // else: no newline
-
     return data;
 }
 
@@ -774,7 +774,7 @@ void MainWindow::updateChecksumDisplay()
         data = Utils::encode(text, encoding);
     }
 
-    Utils::ChecksumType type = static_cast<Utils::ChecksumType>(index - 1);
+    Utils::ChecksumType type = static_cast<Utils::ChecksumType>(index);
     QString result = Utils::checksumString(data, type);
     m_checksumResultLabel->setText(result);
 }
