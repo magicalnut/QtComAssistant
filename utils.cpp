@@ -40,7 +40,7 @@ QString bytesToHex(const QByteArray &bytes, char separator){
     return result;
 }
 
-QByteArray parseEscapes(const QString &text, bool *ok){
+QByteArray parseEscapes(const QString &text,const QString &encoding, bool *ok){
     QByteArray result;
     result.reserve(text.size()/4);
     bool inEscape = false;
@@ -76,7 +76,8 @@ QByteArray parseEscapes(const QString &text, bool *ok){
         } else if (c == '\\') {
             inEscape = true;
         } else {
-            result.append(c.toLatin1());
+            QByteArray encoded = encode(QString(c), encoding);
+            result.append(encoded);
         }
     }
     if (inEscape) {

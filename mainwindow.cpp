@@ -393,7 +393,8 @@ void MainWindow::onSend()
         m_inputLine->setStyleSheet("");
     } else {
         bool ok = false;
-        Utils::parseEscapes(text, &ok);
+        QString encoding = m_encodingCombo->currentText();
+        Utils::parseEscapes(text,encoding, &ok);
         if (!ok) {
             m_inputLine->setStyleSheet("QLineEdit { border: 2px solid red; }");
             onError("转义字符格式错误");
@@ -430,7 +431,8 @@ QByteArray MainWindow::makeSendContent() const
         }
     } else {
         bool ok = false;
-        data = Utils::parseEscapes(text, &ok);
+        QString encoding = m_encodingCombo->currentText();
+        data = Utils::parseEscapes(text,encoding, &ok);
         if (!ok) {
             // 转义格式错误
         }

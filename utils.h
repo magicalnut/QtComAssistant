@@ -9,7 +9,7 @@ QByteArray hexToBytes(const QString &hex, bool *ok = nullptr);
 
 QString bytesToHex(const QByteArray &bytes, char separator = ' ');
 
-QByteArray parseEscapes(const QString &text, bool *ok = nullptr);
+QByteArray parseEscapes(const QString &text,const QString &encoding, bool *ok = nullptr);
 
 enum class ChecksumType { None, XOR, Sum, CRC16_CCITT, CRC16_Modbus };
 
