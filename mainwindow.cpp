@@ -19,6 +19,7 @@
 #include <QStandardPaths>
 #include <QRegularExpression>
 #include <QStatusBar>
+#include <QApplication>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -41,9 +42,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(m_timedSendTimer, &QTimer::timeout,this, &MainWindow::onTimedSendTick);
     // connect(m_keywordBtn, &QPushButton::clicked,this, &MainWindow::onKeywordHighlight);
     // connect(m_keywordEdit, &QLineEdit::returnPressed,this, &MainWindow::onKeywordHighlight);
-    // connect(m_clearBtn, &QPushButton::clicked,this, &MainWindow::onClearScreen);
-    // connect(m_saveBtn, &QPushButton::clicked,this, &MainWindow::onSaveClicked);
-    // connect(m_commandBtn, &QPushButton::clicked,this, &MainWindow::onCommandMenu);
+    connect(m_clearBtn, &QPushButton::clicked,this, &MainWindow::onClearScreen);
+    connect(m_saveBtn, &QPushButton::clicked,this, &MainWindow::onSaveClicked);
+    connect(m_commandBtn, &QPushButton::clicked,this, &MainWindow::onCommandMenu);
     connect(m_dtrCheck, &QCheckBox::toggled,m_service, &SerialService::setDtr);
     connect(m_rtsCheck, &QCheckBox::toggled,m_service, &SerialService::setRts);
 
@@ -241,6 +242,7 @@ void MainWindow::setupUi()
     m_commandBtn = new QPushButton("指令▼");
     m_clearBtn = new QPushButton("清屏");
     m_saveBtn = new QPushButton("保存▼");
+    m_fileSendBtn = new QPushButton("文件发送");
 
     auto *sendOptions = new QHBoxLayout;
     sendOptions->addWidget(m_hexSendCheck);
@@ -254,6 +256,8 @@ void MainWindow::setupUi()
     sendOptions->addWidget(m_commandBtn);
     sendOptions->addWidget(m_clearBtn);
     sendOptions->addWidget(m_saveBtn);
+    sendOptions->addWidget(m_fileSendBtn);
+    connect(m_fileSendBtn, &QPushButton::clicked,this, &MainWindow::onFileSendClicked);
     mainLayout->addLayout(sendOptions);
 
     // ======== 状态栏 ========
@@ -412,7 +416,7 @@ void MainWindow::onSend()
     m_sendHistoryIndex = m_sendHistory.size();
 
     m_service->sendBytes(data);
-    m_inputLine->clear();
+    // m_inputLine->clear();
 }
 
 QByteArray MainWindow::makeSendContent() const
@@ -519,4 +523,139 @@ void MainWindow::onTimedSendTick()
 {
     if (m_service->isOpen())
         onSend();
+}
+
+// ---- 文件发送 ----
+void MainWindow::onFileSendClicked()
+{
+    if (!m_service->isOpen()) {
+        onError("请先打开串口");
+        return;
+    }
+
+    QString path = QFileDialog::getOpenFileName(
+        this, "选择要发送的文件", QString(),
+        "所有文件 (*);;文本文件 (*.txt);;二进制文件 (*.bin)");
+    if (path.isEmpty())
+        return;
+
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly)) {
+        QMessageBox::warning(this, "错误",
+                             QString("无法打开文件：%1").arg(file.errorString()));
+        return;
+    }
+
+    QByteArray fileData = file.readAll();
+    file.close();
+
+    // 分块发送（256 字节/块），保持 UI 响应
+    const int chunkSize = 256;
+    int offset = 0;
+    while (offset < fileData.size()) {
+        QByteArray chunk = fileData.mid(offset, chunkSize);
+        m_service->sendBytes(chunk);
+        offset += chunkSize;
+        QApplication::processEvents();
+    }
+    statusBar()->showMessage(
+        QString("文件发送完成：%1 字节").arg(fileData.size()), 5000);
+}
+
+void MainWindow::onSaveClicked()
+{
+    QMenu menu;
+    QAction *saveAll = menu.addAction("保存全部 (TX+RX)");
+    QAction *saveTx = menu.addAction("仅保存发送");
+    QAction *saveRx = menu.addAction("仅保存接收");
+    QAction *saveRxBin = menu.addAction("仅保存接收 (原始二进制)");
+
+    QAction *chosen = menu.exec(m_saveBtn->mapToGlobal(QPoint(0, m_saveBtn->height())));
+    if (!chosen)
+        return;
+
+    QString filter;
+    bool binary = false;
+    if (chosen == saveRxBin) {
+        filter = "二进制文件 (*.bin)";
+        binary = true;
+    } else {
+        filter = "文本文件 (*.txt)";
+    }
+
+    QString path = QFileDialog::getSaveFileName(this, "保存", QString(), filter);
+    if (path.isEmpty())
+        return;
+
+    if (binary) {
+        // 保存原始接收数据：需要从 m_service 获取历史缓冲区
+        // 当前设计：m_service 不保存历史。简化处理：从终端区提取 RX 行
+        QFile file(path);
+        if (!file.open(QIODevice::WriteOnly)) {
+            QMessageBox::warning(this, "错误",
+                                 QString("无法写入文件：%1").arg(file.errorString()));
+            return;
+        }
+        // 遍历终端文本提取 RX 行，用编码重新编码为字节
+        QString text = m_terminal->toPlainText();
+        QStringList lines = text.split('\n');
+        QByteArray binaryData;
+        QString encoding = m_encodingCombo->currentText();
+        for (const QString &line : lines) {
+            if (line.contains("RX ◀")) {
+                // 提取纯数据部分（去掉时间戳和前缀）
+                QString content = line;
+                // 简单处理：找 "RX ◀ " 之后的内容
+                int idx = content.indexOf("RX ◀ ");
+                if (idx >= 0) {
+                    content = content.mid(idx + 5); // strlen("RX ◀ ")
+                    binaryData.append(Utils::encode(content, encoding));
+                }
+            }
+        }
+        file.write(binaryData);
+        file.close();
+    } else {
+        QFile file(path);
+        if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            QMessageBox::warning(this, "错误",
+                                 QString("无法写入文件：%1").arg(file.errorString()));
+            return;
+        }
+        QTextStream stream(&file);
+        QString text = m_terminal->toPlainText();
+        QStringList lines = text.split('\n');
+
+        if (chosen == saveAll) {
+            stream << text;
+        } else if (chosen == saveTx) {
+            for (const QString &line : lines) {
+                if (line.contains("TX ▶")) {
+                    int idx = line.indexOf("TX ▶ ");
+                    stream << (idx >= 0 ? line.mid(idx + 5) : line) << "\n";
+                }
+            }
+        } else if (chosen == saveRx) {
+            for (const QString &line : lines) {
+                if (line.contains("RX ◀")) {
+                    int idx = line.indexOf("RX ◀ ");
+                    stream << (idx >= 0 ? line.mid(idx + 5) : line) << "\n";
+                }
+            }
+        }
+        file.close();
+    }
+    statusBar()->showMessage("保存完成", 3000);
+}
+
+void MainWindow::onClearScreen()
+{
+    m_terminal->clear();
+}
+
+void MainWindow::onCommandMenu()
+{
+    QMenu menu;
+    menu.addAction("(暂无指令)")->setEnabled(false);
+    menu.exec(m_commandBtn->mapToGlobal(QPoint(0, m_commandBtn->height())));
 }

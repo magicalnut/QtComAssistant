@@ -32,10 +32,10 @@ private slots:
     void onError(const QString &message);
     void onTimedSendTick();
     // void onKeywordHighlight();
-    // void onSaveClicked();
-    // void onFileSendClicked();
-    // void onCommandMenu();
-    // void onClearScreen();
+    void onSaveClicked();
+    void onFileSendClicked();
+    void onCommandMenu();
+    void onClearScreen();
     void refreshPortList();
 
 private:
@@ -87,6 +87,7 @@ private:
     QPushButton *m_commandBtn = nullptr;
     QPushButton *m_clearBtn = nullptr;
     QPushButton *m_saveBtn = nullptr;
+    QPushButton *m_fileSendBtn = nullptr;
 
     // Status bar
     QLabel *m_txRxLabel = nullptr;
