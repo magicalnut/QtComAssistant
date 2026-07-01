@@ -20,6 +20,7 @@
 #include <QRegularExpression>
 #include <QStatusBar>
 #include <QApplication>
+#include <QTextBlock>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -40,8 +41,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(m_sendBtn, &QPushButton::clicked,this, &MainWindow::onSend);
     connect(m_inputLine, &QLineEdit::returnPressed,this, &MainWindow::onSend);
     connect(m_timedSendTimer, &QTimer::timeout,this, &MainWindow::onTimedSendTick);
-    // connect(m_keywordBtn, &QPushButton::clicked,this, &MainWindow::onKeywordHighlight);
-    // connect(m_keywordEdit, &QLineEdit::returnPressed,this, &MainWindow::onKeywordHighlight);
+    connect(m_keywordBtn, &QPushButton::clicked,this, &MainWindow::onKeywordHighlight);
+    connect(m_keywordEdit, &QLineEdit::returnPressed,this, &MainWindow::onKeywordHighlight);
     connect(m_clearBtn, &QPushButton::clicked,this, &MainWindow::onClearScreen);
     connect(m_saveBtn, &QPushButton::clicked,this, &MainWindow::onSaveClicked);
     connect(m_commandBtn, &QPushButton::clicked,this, &MainWindow::onCommandMenu);
@@ -74,24 +75,26 @@ MainWindow::MainWindow(QWidget *parent)
                 }
     });
 
-    // connect(m_checksumCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),this,
-    //         [this]() {
-    //             updateChecksumDisplay();
-    // });
+    connect(m_checksumCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),this,
+            [this]() {
+                updateChecksumDisplay();
+    });
 
-    // connect(m_inputLine, &QLineEdit::textChanged,this,
-    //         [this]() {
-    //             updateChecksumDisplay();
-    // });
+    connect(m_inputLine, &QLineEdit::textChanged,this,
+            [this]() {
+                updateChecksumDisplay();
+    });
 
-    // connect(m_encodingCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),this,
-    //         [this]() {
-    //             updateChecksumDisplay();
-    // });
+    connect(m_encodingCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),this,
+            [this]() {
+                updateChecksumDisplay();
+    });
 
     refreshPortList();
     setPortParamsEnabled(true);
     onPortClosed();
+
+    m_KeywordNext.resize(0);
 }
 
 MainWindow::~MainWindow() = default;
@@ -489,22 +492,105 @@ void MainWindow::onDataReceived(const QByteArray &data)
     appendToTerminal("RX ◀", display, QColor("#D4D4D4"));
 }
 
+static auto KMP(const QString &content,const std::vector<int> & m_KeywordNext,const QString &keyword)
+    ->std::vector<std::pair<int,int> >{
+    int l=0,j=0;
+    std::vector<std::pair<int,int> >res;
+    for(int i=0;i<content.size();i++){
+        if(j==keyword.size()){
+            if(res.size()!=0){
+                int pre=res.size()-1;
+                if(l>res[pre].first+res[pre].second){
+                    res.emplace_back(std::pair<int,int>{l,j});
+                }
+                else{
+                    res[pre].second+=j-res[pre].first-res[pre].second+l;
+                }
+            }
+            else{
+                res.emplace_back(std::pair<int,int>{l,j});
+            }
+            i=l+j-1;
+            l=i+1;
+            j=0;
+            continue;
+        }
+        if(keyword[j]==content[i]){
+            j++;
+        }
+        else{
+            j=m_KeywordNext[j];
+            l=i-j;
+            if(j!=-1){
+                i--;
+            }
+            else{
+                j=0;
+            }
+        }
+    }
+    if(j==keyword.size()){
+        if(res.size()!=0){
+            int pre=res.size()-1;
+            if(l>res[pre].first+res[pre].second){
+                res.emplace_back(std::pair<int,int>{l,j});
+            }
+            else{
+                res[pre].second+=j-res[pre].first-res[pre].second+l;
+            }
+        }
+        else{
+            res.emplace_back(std::pair<int,int>{l,j});
+        }
+    }
+    return res;
+}
+
 // ---- 终端追加 ----
-void MainWindow::appendToTerminal(const QString &prefix,
-                                  const QString &content,
-                                  const QColor &prefixColor)
+void MainWindow::appendToTerminal(const QString &prefix,const QString &content,const QColor &prefixColor)
 {
-    QString line;
-    if (m_timestampCheck->isChecked())
-        line += Utils::timestampNow();
-    line += prefix + " " + content;
 
     // 设置前缀颜色
     QTextCharFormat fmt;
     fmt.setForeground(prefixColor);
     QTextCursor cursor = m_terminal->textCursor();
     cursor.movePosition(QTextCursor::End);
-    cursor.insertText(line + "\n", fmt);
+    if(m_KeywordNext.size()!=0){
+        QTextCharFormat fmt_highlight;
+        fmt_highlight.setForeground(prefixColor);
+        fmt_highlight.setBackground(QColor("#505020"));
+
+        std::vector<std::pair<int,int> > highlighttext=KMP(content,m_KeywordNext,m_currentKeyword);
+        if (m_timestampCheck->isChecked())
+            cursor.insertText(Utils::timestampNow(),fmt);
+        cursor.insertText(prefix+" ", fmt);
+        int p=0,i=0;
+        while(p!=content.size()){
+            if(i==highlighttext.size()){
+                cursor.insertText(content.mid(p,content.size()-p),fmt);
+                break;
+            }
+            if(p==highlighttext[i].first){
+                cursor.insertText(content.mid(p,highlighttext[i].second),fmt_highlight);
+                p+=highlighttext[i].second;
+                i++;
+            }
+            else{
+                cursor.insertText(content.mid(p,highlighttext[i].first-p),fmt);
+                p=highlighttext[i].first;
+            }
+        }
+        cursor.insertText("\n",fmt);
+    }
+    else{
+        QString line;
+        if (m_timestampCheck->isChecked())
+            line += Utils::timestampNow();
+        line += prefix + " " + content;
+        cursor.insertText(line, fmt);
+        cursor.insertText("\n",fmt);
+    }
+
 
     // 自动滚动（除非暂停）
     if (!m_pauseScrollCheck->isChecked()) {
@@ -658,4 +744,122 @@ void MainWindow::onCommandMenu()
     QMenu menu;
     menu.addAction("(暂无指令)")->setEnabled(false);
     menu.exec(m_commandBtn->mapToGlobal(QPoint(0, m_commandBtn->height())));
+}
+
+void MainWindow::updateChecksumDisplay()
+{
+    int index = m_checksumCombo->currentIndex();
+    // 0=None, 1=XOR, 2=Sum, 3=CRC16-CCITT, 4=CRC16-Modbus
+    if (index == 0) {
+        m_checksumResultLabel->clear();
+        return;
+    }
+
+    QString text = m_inputLine->text();
+    if (text.isEmpty()) {
+        m_checksumResultLabel->clear();
+        return;
+    }
+
+    QByteArray data;
+    if (m_hexSendCheck->isChecked()) {
+        bool ok = false;
+        data = Utils::hexToBytes(text, &ok);
+        if (!ok) {
+            m_checksumResultLabel->setText("(格式错误)");
+            return;
+        }
+    } else {
+        QString encoding = m_encodingCombo->currentText();
+        data = Utils::encode(text, encoding);
+    }
+
+    Utils::ChecksumType type = static_cast<Utils::ChecksumType>(index - 1);
+    QString result = Utils::checksumString(data, type);
+    m_checksumResultLabel->setText(result);
+}
+
+static void compute_Next(std::vector<int> & m_KeywordNext,QString keyword){
+    if(keyword.size()==0){
+        m_KeywordNext.resize(0);
+        return ;
+    }
+    int i=1,j=0;
+    m_KeywordNext.resize(0);
+    m_KeywordNext.resize(keyword.size(),-1);
+    if (keyword.size() == 1) {
+        return;
+    }
+    m_KeywordNext[1]=0;
+    while(i!=keyword.size()-1){
+        if(keyword[i]!=keyword[j]){
+            j=0;
+        }
+        else{
+            j++;
+        }
+        i++;
+        m_KeywordNext[i]=j;
+    }
+    for(i=1;i<m_KeywordNext.size();i++){
+        if(keyword[i]==keyword[m_KeywordNext[i]]){
+            m_KeywordNext[i]=m_KeywordNext[m_KeywordNext[i]];
+        }
+    }
+}
+
+void MainWindow::onKeywordHighlight()
+{
+    QString keyword = m_keywordEdit->text().trimmed();
+    if (keyword.isEmpty()){
+        m_KeywordNext.resize(0);
+        clearHighlights();
+        return;
+    }
+
+    // 清除旧高亮
+    clearHighlights();
+
+    // 设置新高亮
+    m_currentKeyword = keyword;
+    compute_Next(m_KeywordNext,m_currentKeyword);
+    applyHighlight(keyword);
+
+    m_keywordBtn->setEnabled(false);
+    m_keywordBtn->setText("已应用");
+    m_keywordApplied = true;
+}
+
+void MainWindow::applyHighlight(const QString &keyword)
+{
+    QTextDocument *doc = m_terminal->document();
+    QTextCursor cursor(doc);
+    QTextCharFormat fmt;
+    fmt.setBackground(QColor("#505020")); // 暗黄底色
+
+    while (!cursor.isNull() && !cursor.atEnd()) {
+        cursor = doc->find(keyword, cursor);
+        if (!cursor.isNull()) {
+            cursor.mergeCharFormat(fmt);
+        }
+    }
+}
+
+void MainWindow::clearHighlights()
+{
+    if (m_currentKeyword.isEmpty())
+        return;
+
+    QTextDocument *doc = m_terminal->document();
+    QTextCursor cursor(doc);
+    QTextCharFormat clearFmt;
+    clearFmt.setBackground(Qt::transparent);
+
+    while (!cursor.isNull() && !cursor.atEnd()) {
+        cursor = doc->find(m_currentKeyword, cursor);
+        if (!cursor.isNull()) {
+            cursor.mergeCharFormat(clearFmt);
+        }
+    }
+    m_currentKeyword.clear();
 }

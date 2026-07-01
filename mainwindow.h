@@ -31,7 +31,7 @@ private slots:
     void onPortClosed();
     void onError(const QString &message);
     void onTimedSendTick();
-    // void onKeywordHighlight();
+    void onKeywordHighlight();
     void onSaveClicked();
     void onFileSendClicked();
     void onCommandMenu();
@@ -47,7 +47,7 @@ private:
     void applyHighlight(const QString &keyword);
     void clearHighlights();
     QByteArray makeSendContent() const;
-    // void updateChecksumDisplay();
+    void updateChecksumDisplay();
 
     // Service
     SerialService *m_service = nullptr;
@@ -75,6 +75,7 @@ private:
 
     // Terminal
     QPlainTextEdit *m_terminal = nullptr;
+    std::vector<int>m_KeywordNext;
 
     // Input
     QLineEdit *m_inputLine = nullptr;
