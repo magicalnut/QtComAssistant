@@ -205,7 +205,7 @@ void MainWindow::setupUi()
     m_terminal = new QPlainTextEdit;
     m_terminal->setReadOnly(true);
     m_terminal->setMaximumBlockCount(10000);
-    m_terminal->setFont(QFont("Consolas", 10));
+    m_terminal->setFont(QFont("NSimSun", 10));
     m_terminal->setStyleSheet("QPlainTextEdit { background-color: #1E1E1E; "
                               "color: #D4D4D4; }");
     mainLayout->addWidget(m_terminal, 1); // stretch=1
@@ -213,7 +213,7 @@ void MainWindow::setupUi()
     // ======== 输入行 ========
     m_inputLine = new QLineEdit;
     m_inputLine->setPlaceholderText("输入发送内容，按回车发送...");
-    m_inputLine->setFont(QFont("Consolas", 10));
+    m_inputLine->setFont(QFont("NSimSun", 10));
     m_sendBtn = new QPushButton("发送");
     m_sendBtn->setMinimumWidth(60);
 
@@ -376,16 +376,39 @@ void MainWindow::onSend()
         return;
     }
 
-    QString encoding = m_encodingCombo->currentText();
-    QByteArray data = makeSendContent();
-    if (data.isEmpty())
+    QString text = m_inputLine->text();
+    if (text.isEmpty()){
         return;
+    }
+
+    // 校验 HEX 格式
+    if (m_hexSendCheck->isChecked()) {
+        bool ok = false;
+        Utils::hexToBytes(text, &ok);
+        if (!ok) {
+            m_inputLine->setStyleSheet("QLineEdit { border: 2px solid red; }");
+            onError("HEX 格式错误");
+            return;
+        }
+        m_inputLine->setStyleSheet("");
+    } else {
+        bool ok = false;
+        Utils::parseEscapes(text, &ok);
+        if (!ok) {
+            m_inputLine->setStyleSheet("QLineEdit { border: 2px solid red; }");
+            onError("转义字符格式错误");
+            return;
+        }
+        m_inputLine->setStyleSheet("");
+    }
+
+    QByteArray data = makeSendContent();
 
     // 加入发送历史
-    QString text = m_inputLine->text();
-    if (m_sendHistory.isEmpty() || m_sendHistory.last() != text)
+    if (m_sendHistory.isEmpty() || m_sendHistory.last() != text){
         m_sendHistory.append(text);
-    m_sendHistoryIndex = m_sendHistory.size(); // 重置为末尾+1
+    }
+    m_sendHistoryIndex = m_sendHistory.size();
 
     m_service->sendBytes(data);
     m_inputLine->clear();
