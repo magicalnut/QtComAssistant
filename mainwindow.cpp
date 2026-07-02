@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "serialservice.h"
 #include "utils.h"
+#include "commanddialog.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -741,9 +742,57 @@ void MainWindow::onClearScreen()
 
 void MainWindow::onCommandMenu()
 {
+    QList<CommandItem> cmds = CommandDialog::loadFromFile();
     QMenu menu;
-    menu.addAction("(暂无指令)")->setEnabled(false);
-    menu.exec(m_commandBtn->mapToGlobal(QPoint(0, m_commandBtn->height())));
+    QAction *manageAction = menu.addAction("管理指令...");
+    menu.addSeparator();
+
+    QList<QAction*> cmdActions;
+    for (int i = 0; i < cmds.size(); ++i) {
+        QAction *act = menu.addAction(
+            QString("[%1] %2").arg(cmds[i].isHex ? "HEX" : "TXT", cmds[i].name));
+        cmdActions.append(act);
+    }
+    if (cmds.isEmpty())
+        menu.addAction("(无指令)")->setEnabled(false);
+
+    QAction *chosen = menu.exec(
+        m_commandBtn->mapToGlobal(QPoint(0, m_commandBtn->height())));
+    if (!chosen)
+        return;
+
+    if (chosen == manageAction) {
+        CommandDialog dlg(this);
+        dlg.setCommands(cmds);
+        if (dlg.exec() == QDialog::Accepted) {
+            CommandDialog::saveToFile(dlg.commands());
+            // 更新自动回复规则
+            QList<QPair<QByteArray, QByteArray>> rules;
+            for (const auto &cmd : dlg.commands()) {
+                if (!cmd.autoReplyPattern.isEmpty() && !cmd.content.isEmpty()) {
+                    QByteArray pattern = cmd.isHex
+                                             ? Utils::hexToBytes(cmd.autoReplyPattern)
+                                             : cmd.autoReplyPattern.toUtf8();
+                    QByteArray response = cmd.isHex
+                                              ? Utils::hexToBytes(cmd.content)
+                                              : cmd.content.toUtf8();
+                    rules.append({pattern, response});
+                }
+            }
+            m_service->setAutoReplyRules(rules);
+            m_service->setAutoReplyEnabled(!rules.isEmpty());
+        }
+        return;
+    }
+
+    // 选中一个指令
+    for (int i = 0; i < cmdActions.size(); ++i) {
+        if (chosen == cmdActions[i]) {
+            m_inputLine->setText(cmds[i].content);
+            m_hexSendCheck->setChecked(cmds[i].isHex);
+            break;
+        }
+    }
 }
 
 void MainWindow::updateChecksumDisplay()

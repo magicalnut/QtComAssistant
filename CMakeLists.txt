@@ -15,6 +15,7 @@ qt_add_executable(
     utils.cpp
     serialservice.h
     serialservice.cpp
+    commanddialog.h commanddialog.cpp
 )
 
 qt_add_translations(
