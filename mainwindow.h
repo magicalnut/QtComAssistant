@@ -12,6 +12,8 @@
 #include <QMenu>
 #include <QSerialPort>
 
+#include "commanddialog.h"
+
 class SerialService;
 
 class MainWindow : public QMainWindow
@@ -103,5 +105,6 @@ private:
     qint64 m_rxCount = 0;
     bool m_keywordApplied = false;
     QString m_currentKeyword;
+    QList<CommandItem> m_commands;
 };
 #endif // MAINWINDOW_H

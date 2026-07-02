@@ -4,11 +4,6 @@
 #include <QFormLayout>
 #include <QDialogButtonBox>
 #include <QLabel>
-#include <QFile>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QMessageBox>
-#include <QStandardPaths>
 
 CommandDialog::CommandDialog(QWidget *parent)
     : QDialog(parent){
@@ -108,48 +103,3 @@ void CommandDialog::onSaveField(){
     m_list->item(row)->setText(m_commands[row].name);
 }
 
-QString CommandDialog::jsonFilePath(){
-    return QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)+ "/commands.json";
-}
-
-QList<CommandItem> CommandDialog::loadFromFile(){
-    QList<CommandItem> result;
-    QFile file(jsonFilePath());
-    if (!file.open(QIODevice::ReadOnly)){
-        return result;
-    }
-
-    QJsonDocument doc = QJsonDocument::fromJson(file.readAll());
-    file.close();
-    if (!doc.isArray()){
-        return result;
-    }
-
-    for (const auto &val : doc.array()) {
-        QJsonObject obj = val.toObject();
-        CommandItem cmd;
-        cmd.name = obj["name"].toString();
-        cmd.content = obj["content"].toString();
-        cmd.isHex = obj["isHex"].toBool();
-        cmd.autoReplyPattern = obj["autoReplyPattern"].toString();
-        result.append(cmd);
-    }
-    return result;
-}
-
-void CommandDialog::saveToFile(const QList<CommandItem> &cmds){
-    QJsonArray arr;
-    for (const auto &cmd : cmds) {
-        QJsonObject obj;
-        obj["name"] = cmd.name;
-        obj["content"] = cmd.content;
-        obj["isHex"] = cmd.isHex;
-        obj["autoReplyPattern"] = cmd.autoReplyPattern;
-        arr.append(obj);
-    }
-    QFile file(jsonFilePath());
-    if (file.open(QIODevice::WriteOnly)) {
-        file.write(QJsonDocument(arr).toJson());
-        file.close();
-    }
-}

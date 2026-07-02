@@ -742,18 +742,17 @@ void MainWindow::onClearScreen()
 
 void MainWindow::onCommandMenu()
 {
-    QList<CommandItem> cmds = CommandDialog::loadFromFile();
     QMenu menu;
     QAction *manageAction = menu.addAction("管理指令...");
     menu.addSeparator();
 
     QList<QAction*> cmdActions;
-    for (int i = 0; i < cmds.size(); ++i) {
+    for (int i = 0; i < m_commands.size(); ++i) {
         QAction *act = menu.addAction(
-            QString("[%1] %2").arg(cmds[i].isHex ? "HEX" : "TXT", cmds[i].name));
+            QString("[%1] %2").arg(m_commands[i].isHex ? "HEX" : "TXT", m_commands[i].name));
         cmdActions.append(act);
     }
-    if (cmds.isEmpty())
+    if (m_commands.isEmpty())
         menu.addAction("(无指令)")->setEnabled(false);
 
     QAction *chosen = menu.exec(
@@ -763,12 +762,12 @@ void MainWindow::onCommandMenu()
 
     if (chosen == manageAction) {
         CommandDialog dlg(this);
-        dlg.setCommands(cmds);
+        dlg.setCommands(m_commands);
         if (dlg.exec() == QDialog::Accepted) {
-            CommandDialog::saveToFile(dlg.commands());
+            m_commands = dlg.commands();
             // 更新自动回复规则
             QList<QPair<QByteArray, QByteArray>> rules;
-            for (const auto &cmd : dlg.commands()) {
+            for (const auto &cmd : m_commands) {
                 if (!cmd.autoReplyPattern.isEmpty() && !cmd.content.isEmpty()) {
                     QByteArray pattern = cmd.isHex
                                              ? Utils::hexToBytes(cmd.autoReplyPattern)
@@ -788,8 +787,8 @@ void MainWindow::onCommandMenu()
     // 选中一个指令
     for (int i = 0; i < cmdActions.size(); ++i) {
         if (chosen == cmdActions[i]) {
-            m_inputLine->setText(cmds[i].content);
-            m_hexSendCheck->setChecked(cmds[i].isHex);
+            m_inputLine->setText(m_commands[i].content);
+            m_hexSendCheck->setChecked(m_commands[i].isHex);
             break;
         }
     }

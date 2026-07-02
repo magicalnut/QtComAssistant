@@ -24,10 +24,6 @@ public:
     QList<CommandItem> commands() const;
     void setCommands(const QList<CommandItem> &cmds);
 
-    static QString jsonFilePath();
-    static QList<CommandItem> loadFromFile();
-    static void saveToFile(const QList<CommandItem> &cmds);
-
 private slots:
     void onAdd();
     void onDelete();
