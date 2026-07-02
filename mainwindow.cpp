@@ -98,6 +98,8 @@ MainWindow::MainWindow(QWidget *parent)
     m_KeywordNext.resize(0);
     // 发送历史上下键浏览
     m_inputLine->installEventFilter(this);
+
+
 }
 
 MainWindow::~MainWindow() = default;

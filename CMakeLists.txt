@@ -9,13 +9,11 @@ qt_add_executable(
     QtComAssistant
     WIN32 MACOSX_BUNDLE
     main.cpp
-    mainwindow.cpp
-    mainwindow.h
-    utils.h
-    utils.cpp
-    serialservice.h
-    serialservice.cpp
+    mainwindow.h mainwindow.cpp
+    utils.h utils.cpp
+    serialservice.h serialservice.cpp
     commanddialog.h commanddialog.cpp
+    QtComAssistant_zh_CN.ts
 )
 
 qt_add_translations(
