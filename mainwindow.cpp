@@ -600,11 +600,6 @@ void MainWindow::appendToTerminal(const QString &prefix,const QString &content,c
     }
 }
 
-void MainWindow::trimTerminalLines()
-{
-    // QPlainTextEdit 已通过 setMaximumBlockCount(10000) 自动裁剪
-}
-
 // ---- 定时发送 ----
 void MainWindow::onTimedSendTick()
 {

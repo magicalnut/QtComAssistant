@@ -45,7 +45,6 @@ private:
     void setPortParamsEnabled(bool enabled);
     void appendToTerminal(const QString &prefix, const QString &content,
                           const QColor &prefixColor);
-    void trimTerminalLines();
     void applyHighlight(const QString &keyword);
     void clearHighlights();
     QByteArray makeSendContent() const;
