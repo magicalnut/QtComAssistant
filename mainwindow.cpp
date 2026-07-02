@@ -96,6 +96,8 @@ MainWindow::MainWindow(QWidget *parent)
     onPortClosed();
 
     m_KeywordNext.resize(0);
+    // 发送历史上下键浏览
+    m_inputLine->installEventFilter(this);
 }
 
 MainWindow::~MainWindow() = default;
@@ -905,4 +907,42 @@ void MainWindow::clearHighlights()
         }
     }
     m_currentKeyword.clear();
+}
+
+bool MainWindow::eventFilter(QObject *obj, QEvent *event)
+{
+    if (obj == m_inputLine && event->type() == QEvent::KeyPress) {
+        auto *keyEvent = static_cast<QKeyEvent*>(event);
+        if (keyEvent->key() == Qt::Key_Up) {
+            // 浏览上一条历史
+            if (m_sendHistory.isEmpty())
+                return true;
+            if (m_sendHistoryIndex >= m_sendHistory.size()) {
+                // 如果正在输入新内容，先保存
+                QString current = m_inputLine->text();
+                if (!current.isEmpty()
+                    && (m_sendHistory.isEmpty()
+                        || m_sendHistory.last() != current)) {
+                    m_sendHistory.append(current);
+                }
+                m_sendHistoryIndex = m_sendHistory.size() - 1;
+            } else if (m_sendHistoryIndex > 0) {
+                m_sendHistoryIndex--;
+            }
+            m_inputLine->setText(m_sendHistory.at(m_sendHistoryIndex));
+            return true;
+        } else if (keyEvent->key() == Qt::Key_Down) {
+            if (m_sendHistory.isEmpty())
+                return true;
+            if (m_sendHistoryIndex < m_sendHistory.size() - 1) {
+                m_sendHistoryIndex++;
+                m_inputLine->setText(m_sendHistory.at(m_sendHistoryIndex));
+            } else {
+                m_sendHistoryIndex = m_sendHistory.size();
+                m_inputLine->clear();
+            }
+            return true;
+        }
+    }
+    return QMainWindow::eventFilter(obj, event);
 }

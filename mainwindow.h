@@ -105,5 +105,7 @@ private:
     bool m_keywordApplied = false;
     QString m_currentKeyword;
     QList<CommandItem> m_commands;
+protected:
+    bool eventFilter(QObject *obj, QEvent *event) override;
 };
 #endif // MAINWINDOW_H
