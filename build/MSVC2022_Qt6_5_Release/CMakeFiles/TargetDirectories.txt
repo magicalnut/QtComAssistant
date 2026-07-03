@@ -1,0 +1,12 @@
+P:/Qt/QtComAssistant/build/MSVC2022_Qt6_5_Release/CMakeFiles/QtComAssistant.dir
+P:/Qt/QtComAssistant/build/MSVC2022_Qt6_5_Release/CMakeFiles/QtComAssistant_lupdate.dir
+P:/Qt/QtComAssistant/build/MSVC2022_Qt6_5_Release/CMakeFiles/update_translations.dir
+P:/Qt/QtComAssistant/build/MSVC2022_Qt6_5_Release/CMakeFiles/QtComAssistant_lrelease.dir
+P:/Qt/QtComAssistant/build/MSVC2022_Qt6_5_Release/CMakeFiles/release_translations.dir
+P:/Qt/QtComAssistant/build/MSVC2022_Qt6_5_Release/CMakeFiles/edit_cache.dir
+P:/Qt/QtComAssistant/build/MSVC2022_Qt6_5_Release/CMakeFiles/rebuild_cache.dir
+P:/Qt/QtComAssistant/build/MSVC2022_Qt6_5_Release/CMakeFiles/list_install_components.dir
+P:/Qt/QtComAssistant/build/MSVC2022_Qt6_5_Release/CMakeFiles/install.dir
+P:/Qt/QtComAssistant/build/MSVC2022_Qt6_5_Release/CMakeFiles/install/local.dir
+P:/Qt/QtComAssistant/build/MSVC2022_Qt6_5_Release/CMakeFiles/QtComAssistant_autogen_timestamp_deps.dir
+P:/Qt/QtComAssistant/build/MSVC2022_Qt6_5_Release/CMakeFiles/QtComAssistant_autogen.dir

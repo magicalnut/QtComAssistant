@@ -1,0 +1,115 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-.-Release-09b9b546dfc2a8fc9873.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.16"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5,
+						6
+					]
+				}
+			],
+			"name" : "Release",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "QtComAssistant",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5,
+						6
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "QtComAssistant::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-QtComAssistant-Release-42cae01e4ac4e308c419.json",
+					"name" : "QtComAssistant",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "QtComAssistant_autogen::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-QtComAssistant_autogen-Release-42d25bbafb233d7c87a9.json",
+					"name" : "QtComAssistant_autogen",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "QtComAssistant_autogen_timestamp_deps::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-QtComAssistant_autogen_timestamp_deps-Release-d760c68be0ba1009f434.json",
+					"name" : "QtComAssistant_autogen_timestamp_deps",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "QtComAssistant_lrelease::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-QtComAssistant_lrelease-Release-5ad37792580fd1799d18.json",
+					"name" : "QtComAssistant_lrelease",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "QtComAssistant_lupdate::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-QtComAssistant_lupdate-Release-3da92f337fe4f71e53d2.json",
+					"name" : "QtComAssistant_lupdate",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "release_translations::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-release_translations-Release-fa917d04c47104b7c648.json",
+					"name" : "release_translations",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "update_translations::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-update_translations-Release-31c74cca871bc0115e7c.json",
+					"name" : "update_translations",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "P:/Qt/QtComAssistant/build/MSVC2022_Qt6_5_Release",
+		"source" : "P:/Qt/QtComAssistant"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 7
+	}
+}
